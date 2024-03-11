@@ -233,8 +233,9 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         pre-processed with preprocess()
         :returns: list of movie titles that are potentially in the text
         """
-        return []
-
+        moviTitlesList = re.findall(r'"(.*?)"', preprocessed_input)
+        return moviTitlesList
+        
     def find_movies_by_title(self, title):
         """ Given a movie title, return a list of indices of matching movies.
 
@@ -253,8 +254,46 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         :param title: a string containing a movie title
         :returns: a list of indices of matching movies
         """
-        return []
+        lowertitle = title.lower()
+        cleanTitle = lowertitle.strip()
+        if "(" in cleanTitle and ")" in cleanTitle:
+            yearFound = re.search(r'\((\d{4})\)', cleanTitle)
+            if yearFound:
+                year = year_match.group(1)
+                cleanTitle = re.sub(r'\(\d{4}\)', '', cleanTitle)
+        cleanTitle.strip()
 
+        if cleanTitle.endswith(", the"):
+            cleanTitle = "the "
+            cleanTitle += cleanTitle[:-5]
+        elif cleanTitle.endswith(", a"):
+            cleanTitle = "a "
+            cleanTitle += cleanTitle[:-3]
+        elif cleanTitle.endswith(", an"):
+            cleanTitle = "an " 
+            cleanTitle += cleanTitle[:-4]
+        elif cleanTitle.endswith(" the"):
+            cleanTitle = "the " 
+            cleanTitle += cleanTitle[:-4]            
+        elif cleanTitle.endswith(", to"):
+            cleanTitle = "to " 
+            cleanTitle += cleanTitle[:-3]   
+            
+        pattern = cleanTitle + " (" + str(year) + ")"
+        results = []
+        index = 0  
+        for t in self.titles:  
+            if year:
+                if pattern in t.lower():
+                    results.append(index)
+            else:
+                noyear = re.sub(r'\(\d{4}\)', '', t)
+                noyear = noyear.lower()
+                noyear = noyear.strip()
+                if cleanTitle == noyear:
+                    results.append(index)
+            index += 1
+        return results
     def extract_sentiment(self, preprocessed_input):
         """Extract a sentiment rating from a line of pre-processed text.
 
@@ -271,8 +310,25 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         pre-processed with preprocess()
         :returns: a numerical value for the sentiment of the text
         """
-        return 0
+        words = preprocessed_input.lower()
+        words = words.split()
+        positive = 0
+        negative = 0
 
+        for word in words:
+            sentiment_score = self.sentiment.get(word, 0)
+            if sentiment_score > 0:
+                positive += 1
+            elif sentiment_score <= 0:
+                negative += 1
+                
+        if positive > negative:
+            return 1
+        elif negative > positive:
+            return -1
+        else:
+            return 0
+        return 0
     ############################################################################
     # 3. Movie Recommendation helper functions                                 #
     ############################################################################
@@ -325,6 +381,10 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # TODO: Compute cosine similarity between the two vectors.             #
         ########################################################################
         similarity = 0
+        dotprod = np.dot(u,v)
+        lenU = np.linalg.norm(u)
+        lenV = np.linalg.norm(v)
+        similarity = dotprod/(lenU * lenV)
         ########################################################################
         #                          END OF YOUR CODE                            #
         ########################################################################
@@ -401,11 +461,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         """
 
         return """
-        Your task is to implement the chatbot as detailed in the PA7
-        instructions.
-        Remember: in the GUS mode, movie names will come in quotation marks
-        and expressions of sentiment will be simple!
-        TODO: Write here the description for your own chatbot!
+        This chatbot is named Kernie. This chatbot uses NLP and LLMs to recommend movies to you!
         """
 
 
