@@ -343,21 +343,30 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         pre-processed with preprocess()
         :returns: a numerical value for the sentiment of the text
         """
+        
         words = preprocessed_input.lower()
         words = words.split()
-        
+        extracted = self.extract_titles(preprocessed_input)
+        title = extracted[0].lower()
+        titles = title.split()
+   
         positive = 0
         negative = 0
 
         for word in words:
             if word.startswith("\""):
+                word = word[1:]
+            if word.endswith("\""):
+                word = word[:-1]
+            if word in titles:
                 continue
-            print(word)
             sentiment_score = self.sentiment.get(word, "")
             if sentiment_score == "pos":
                 positive += 1
             elif sentiment_score == "neg":
-                negative += 1       
+                print(word)
+                negative += 1     
+
         if positive > negative:
             return 1
         elif negative > positive:
