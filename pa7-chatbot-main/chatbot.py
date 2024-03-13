@@ -24,6 +24,7 @@ class Chatbot:
         # This matrix has the following shape: num_movies x num_users
         # The values stored in each row i and column j is the rating for
         # movie i by user j
+        self.user_ratings = []
         self.titles, ratings = util.load_ratings('data/ratings.txt')
         self.sentiment = util.load_sentiment_dictionary('data/sentiment.txt')
 
@@ -137,19 +138,39 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # directly based on how modular it is, we highly recommended writing   #
         # code in a modular fashion to make it easier to improve and debug.    #
         ########################################################################
-        preprocessed_input = self.preprocess(line)
-    
-        extracted_titles = self.extract_titles(preprocessed_input)
-        extracted_sentiment = self.extract_sentiment(preprocessed_input)
-        extracted_emotion = self.extract_emotion(preprocessed_input)
-
         if self.llm_enabled:
             response = "I processed {} in LLM Programming mode!!".format(line)
         else:
-            if len(extracted_titles) == 0:
-                response = "Sorry, I don't understand. Tell me about a movie that you have seen."
+            response = ""
+            if not line:
+                response = "I didn't catch that. Could you tell me about a movie you've seen?"
             else:
-                response = "I processed {} in Starter (GUS) mode!!".format(line)
+                titles = self.extract_titles(line)
+                if titles:
+                    for title in titles:
+                        movie_indices = self.find_movies_by_title(title)
+                        if movie_indices:
+                            sentiment = self.extract_sentiment(line)
+                            if sentiment == 1:
+                                response += f'You liked "{title}". Thank you! '
+                            elif sentiment == -1:
+                                response += f'You did not like "{title}". Thank you! '
+                            else:
+                                response += f'You had a neutral sentiment towards "{title}". Thank you! '
+                            self.user_ratings.append(sentiment)
+                            print(len(self.user_ratings))
+                        else:
+                            response = f"Sorry, I couldn't find any information about {title}. "
+                else:
+                    response = "Sorry, I didn't catch the movie title. Please provide it in quotation marks. "
+                if len(self.user_ratings) >= 5:
+                    response += "\nThat's enough for me to make a recommendation.\n"
+                    recommended_indices = self.recommend(self.user_ratings, self.binarize(self.ratings), 1)
+                    recommended_movie = self.movie_database[recommended_indices[0]]
+                    response += f"I suggest you watch {recommended_movie}."
+                else:
+                    response += "\nTell me about another movie you've seen."
+        return response
 
         ########################################################################
         #                          END OF YOUR CODE                            #
@@ -278,15 +299,19 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         if cleanTitle.endswith(", the"):
             cleanTitle = "the "
             cleanTitle += cleanTitle[:-5]
+
         elif cleanTitle.endswith(", a"):
             cleanTitle = "a "
             cleanTitle += cleanTitle[:-3]
+
         elif cleanTitle.endswith(", an"):
             cleanTitle = "an " 
             cleanTitle += cleanTitle[:-4]
+
         elif cleanTitle.endswith(" the"):
             cleanTitle = "the " 
-            cleanTitle += cleanTitle[:-4]            
+            cleanTitle += cleanTitle[:-4]      
+
         elif cleanTitle.endswith(", to"):
             cleanTitle = "to " 
             cleanTitle += cleanTitle[:-3]   
@@ -299,13 +324,14 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                 if pattern in t.lower():
                     results.append(index)
             else:
-                noyear = re.sub(r'\(\d{4}\)', '', t)
+                noyear = re.sub(r'\(\d{4}\)', '', t[0])
                 noyear = noyear.lower()
                 noyear = noyear.strip()
                 if cleanTitle == noyear:
                     results.append(index)
             index += 1
         return results
+    
     def extract_sentiment(self, preprocessed_input):
         """Extract a sentiment rating from a line of pre-processed text.
 
@@ -328,12 +354,11 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         negative = 0
 
         for word in words:
-            sentiment_score = self.sentiment.get(word, 0)
-            if sentiment_score > 0:
+            sentiment_score = self.sentiment.get(word, "")
+            if sentiment_score == "pos":
                 positive += 1
-            elif sentiment_score <= 0:
-                negative += 1
-                
+            elif sentiment_score == "neg":
+                negative += 1       
         if positive > negative:
             return 1
         elif negative > positive:
@@ -372,15 +397,10 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
         # The starter code returns a new matrix shaped like ratings but full of
         # zeros.
-        binarized_ratings = np.zeros_like(ratings)
+        binarized_ratings = ratings
 
-        for i,rating in enumerate(ratings):
-            if rating > threshold:
-                binarized_ratings[i] = 1
-            elif rating == 0:
-                binarized_ratings[i] = 0
-            else:
-                binarized_ratings[i] = -1
+        binarized_ratings = np.where(ratings > threshold, 1, binarized_ratings)
+        binarized_ratings = np.where((ratings <= threshold) & (ratings != 0), -1, binarized_ratings)
 
         ########################################################################
         #                        END OF YOUR CODE                              #
@@ -448,6 +468,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # Populate this list with k movie indices to recommend to the user.
         recommendations = []
         sims = []
+        print(ratings_matrix)
         for i in range(ratings_matrix):
             sims[i] = self.similarity(user_ratings,ratings_matrix[i])
         
