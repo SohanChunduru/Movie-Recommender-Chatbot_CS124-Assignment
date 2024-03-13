@@ -6,7 +6,7 @@
 ######################################################################
 import util
 from pydantic import BaseModel, Field
-
+import re
 import numpy as np
 
 
@@ -80,7 +80,7 @@ class Chatbot:
         # TODO: Write a system prompt message for the LLM chatbot              #
         ########################################################################
 
-              system_prompt = """
+        system_prompt = """
         
         You are Kernie, a chatbot designed to talk to users about movies and potentially recommend movies they would like. You are very knowledgeable about all kinds of movies from around the world, including Hollywood, Bollywood, anime, and more. You are friendly, enthusiastic, and concise.
 
@@ -110,6 +110,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
     # 2. Modules 2 and 3: extraction and transformation                        #
     ############################################################################
 
+
     def process(self, line):
         """Process a line of input from the REPL and generate a response.
 
@@ -136,10 +137,19 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # directly based on how modular it is, we highly recommended writing   #
         # code in a modular fashion to make it easier to improve and debug.    #
         ########################################################################
+        preprocessed_input = self.preprocess(line)
+    
+        extracted_titles = self.extract_titles(preprocessed_input)
+        extracted_sentiment = self.extract_sentiment(preprocessed_input)
+        extracted_emotion = self.extract_emotion(preprocessed_input)
+
         if self.llm_enabled:
             response = "I processed {} in LLM Programming mode!!".format(line)
         else:
-            response = "I processed {} in Starter (GUS) mode!!".format(line)
+            if len(extracted_titles) == 0:
+                response = "Sorry, I don't understand. Tell me about a movie that you have seen."
+            else:
+                response = "I processed {} in Starter (GUS) mode!!".format(line)
 
         ########################################################################
         #                          END OF YOUR CODE                            #
@@ -256,10 +266,12 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         """
         lowertitle = title.lower()
         cleanTitle = lowertitle.strip()
+        year = None
+        
         if "(" in cleanTitle and ")" in cleanTitle:
             yearFound = re.search(r'\((\d{4})\)', cleanTitle)
             if yearFound:
-                year = year_match.group(1)
+                year = yearFound.group(1)
                 cleanTitle = re.sub(r'\(\d{4}\)', '', cleanTitle)
         cleanTitle.strip()
 
@@ -362,6 +374,14 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # zeros.
         binarized_ratings = np.zeros_like(ratings)
 
+        for i,rating in enumerate(ratings):
+            if rating > threshold:
+                binarized_ratings[i] = 1
+            elif rating == 0:
+                binarized_ratings[i] = 0
+            else:
+                binarized_ratings[i] = -1
+
         ########################################################################
         #                        END OF YOUR CODE                              #
         ########################################################################
@@ -425,9 +445,13 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # cosine similarity, no mean-centering, and no normalization of        #
         # scores.                                                              #
         ########################################################################
-
         # Populate this list with k movie indices to recommend to the user.
         recommendations = []
+        sims = []
+        for i in range(ratings_matrix):
+            sims[i] = self.similarity(user_ratings,ratings_matrix[i])
+        
+        recommendations = np.argsort(sims)[::-1][:k]
 
         ########################################################################
         #                        END OF YOUR CODE                              #
