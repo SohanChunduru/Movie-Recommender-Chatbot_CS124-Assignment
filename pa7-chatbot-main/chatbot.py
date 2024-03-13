@@ -7,6 +7,7 @@
 import util
 from pydantic import BaseModel, Field
 import re
+from porter_stemmer import PorterStemmer
 import numpy as np
 
 
@@ -27,7 +28,7 @@ class Chatbot:
         self.user_ratings = []
         self.titles, ratings = util.load_ratings('data/ratings.txt')
         self.sentiment = util.load_sentiment_dictionary('data/sentiment.txt')
-
+            
         ########################################################################
         # TODO: Binarize the movie ratings matrix.                             #
         ########################################################################
@@ -297,29 +298,19 @@ Your reply: “Thank you for all the information regarding movies you have seen.
             yearFound = re.search(r'\((\d{4})\)', cleanTitle)
             if yearFound:
                 year = yearFound.group(1)
-                cleanTitle = re.sub(r'\(\d{4}\)', '', cleanTitle)
+                cleanTitle = re.sub(r' \(\d{4}\)', '', cleanTitle)
         cleanTitle.strip()
-        print(cleanTitle)
-        if cleanTitle.endswith(", the"):
-            cleanTitle = "the "
-            cleanTitle += cleanTitle[:-5]
+        if cleanTitle.startswith("the "):
+            cleanTitle = cleanTitle[4:] + ", the"
+            print(cleanTitle)
 
-        elif cleanTitle.endswith(", a"):
-            cleanTitle = "a "
-            cleanTitle += cleanTitle[:-3]
+        elif cleanTitle.startswith("a "):
+            cleanTitle = cleanTitle[2:] + ", a"
 
-        elif cleanTitle.endswith(", an"):
-            cleanTitle = "an " 
-            cleanTitle += cleanTitle[:-4]
+        elif cleanTitle.startswith("an "):
+            cleanTitle = cleanTitle[3:] + ", an"
 
-        elif cleanTitle.endswith(" the"):
-            cleanTitle = "the " 
-            cleanTitle += cleanTitle[:-4]      
-
-        elif cleanTitle.endswith(", to"):
-            cleanTitle = "to " 
-            cleanTitle += cleanTitle[:-3]   
-            
+        print(year)    
         pattern = cleanTitle + " (" + str(year) + ")"
         results = []
         index = 0  
@@ -354,10 +345,14 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         """
         words = preprocessed_input.lower()
         words = words.split()
+        
         positive = 0
         negative = 0
 
         for word in words:
+            if word.startswith("\""):
+                continue
+            print(word)
             sentiment_score = self.sentiment.get(word, "")
             if sentiment_score == "pos":
                 positive += 1
@@ -405,6 +400,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
         binarized_ratings = np.where(ratings > threshold, 1, binarized_ratings)
         binarized_ratings = np.where((ratings <= threshold) & (ratings != 0), -1, binarized_ratings)
+        print(binarized_ratings)
 
         ########################################################################
         #                        END OF YOUR CODE                              #
