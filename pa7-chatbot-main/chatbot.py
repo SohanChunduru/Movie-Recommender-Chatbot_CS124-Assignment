@@ -33,7 +33,7 @@ class Chatbot:
         ########################################################################
 
         # Binarize the movie ratings before storing the binarized matrix.
-        self.ratings = ratings
+        self.ratings = self.binarize(ratings)
         ########################################################################
         #                             END OF YOUR CODE                         #
         ########################################################################
@@ -147,20 +147,24 @@ Your reply: “Thank you for all the information regarding movies you have seen.
             else:
                 titles = self.extract_titles(line)
                 if titles:
-                    for title in titles:
-                        movie_indices = self.find_movies_by_title(title)
-                        if movie_indices:
-                            sentiment = self.extract_sentiment(line)
-                            if sentiment == 1:
-                                response += f'You liked "{title}". Thank you! '
-                            elif sentiment == -1:
-                                response += f'You did not like "{title}". Thank you! '
+                    if len(titles) == 1:
+                        for title in titles:
+                            movie_indices = self.find_movies_by_title(title)
+                            print(movie_indices)
+                            if movie_indices:
+                                sentiment = self.extract_sentiment(line)
+                                if sentiment == 1:
+                                    response += f'You liked "{title}". Thank you! '
+                                elif sentiment == -1:
+                                    response += f'You did not like "{title}". Thank you! '
+                                else:
+                                    response += f'You had a neutral sentiment towards "{title}". Thank you! '
+                                self.user_ratings.append(sentiment)
+                                print(len(self.user_ratings))
                             else:
-                                response += f'You had a neutral sentiment towards "{title}". Thank you! '
-                            self.user_ratings.append(sentiment)
-                            print(len(self.user_ratings))
-                        else:
-                            response = f"Sorry, I couldn't find any information about {title}. "
+                                response = f"Sorry, I couldn't find any information about {title}. "
+                    else:
+                        response = "Please tell me about one movie at a time. Go ahead."
                 else:
                     response = "Sorry, I didn't catch the movie title. Please provide it in quotation marks. "
                 if len(self.user_ratings) >= 5:
@@ -295,7 +299,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                 year = yearFound.group(1)
                 cleanTitle = re.sub(r'\(\d{4}\)', '', cleanTitle)
         cleanTitle.strip()
-
+        print(cleanTitle)
         if cleanTitle.endswith(", the"):
             cleanTitle = "the "
             cleanTitle += cleanTitle[:-5]
@@ -321,7 +325,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         index = 0  
         for t in self.titles:  
             if year:
-                if pattern in t.lower():
+                if pattern in t[0].lower():
                     results.append(index)
             else:
                 noyear = re.sub(r'\(\d{4}\)', '', t[0])
