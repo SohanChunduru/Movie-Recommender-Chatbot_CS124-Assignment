@@ -19,6 +19,7 @@ class Chatbot:
         # The chatbot's default name is `moviebot`.
         # TODO: Give your chatbot a new name.
         self.name = 'Kernie'
+        p = PorterStemmer
 
         self.llm_enabled = llm_enabled
 
@@ -343,7 +344,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         pre-processed with preprocess()
         :returns: a numerical value for the sentiment of the text
         """
-        
+        p = PorterStemmer()
         words = preprocessed_input.lower()
         words = words.split()
         extracted = self.extract_titles(preprocessed_input)
@@ -353,6 +354,14 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         positive = 0
         negative = 0
 
+        #stemming sentiment dictionary
+        old_keys = list(self.sentiment.keys())
+        for key in old_keys:
+            new_key = p.stem(key, 0, len(key) - 1)
+            
+            if new_key != key:
+                self.sentiment[new_key] = self.sentiment.pop(key)
+
         for word in words:
             if word.startswith("\""):
                 word = word[1:]
@@ -360,6 +369,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                 word = word[:-1]
             if word in titles:
                 continue
+            word = p.stem(word, 0, len(word) - 1)
             sentiment_score = self.sentiment.get(word, "")
             if sentiment_score == "pos":
                 positive += 1
@@ -475,13 +485,13 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # scores.                                                              #
         ########################################################################
         # Populate this list with k movie indices to recommend to the user.
-        recommendations = []
-        sims = []
-        print(ratings_matrix)
-        for i in range(ratings_matrix):
-            sims[i] = self.similarity(user_ratings,ratings_matrix[i])
-        
-        recommendations = np.argsort(sims)[::-1][:k]
+        user_ratings = np.array(user_ratings)
+        ratings = np.array(ratings_matrix)
+        similarities = self.similarity(user_ratings,ratings)
+        print(similarities)
+        movie_indices = np.argsort(similarities)[::-1]
+        unseen_movies = [idx for idx in movie_indices if idx not in np.nonzero(user_ratings)[0]]
+        recommendations = unseen_movies[:k]
 
         ########################################################################
         #                        END OF YOUR CODE                              #
