@@ -19,7 +19,6 @@ class Chatbot:
         # The chatbot's default name is `moviebot`.
         # TODO: Give your chatbot a new name.
         self.name = 'Kernie'
-        p = PorterStemmer
 
         self.llm_enabled = llm_enabled
 
@@ -353,6 +352,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
    
         positive = 0
         negative = 0
+        negation_flag = False
 
         #stemming sentiment dictionary
         old_keys = list(self.sentiment.keys())
@@ -372,10 +372,20 @@ Your reply: “Thank you for all the information regarding movies you have seen.
             word = p.stem(word, 0, len(word) - 1)
             sentiment_score = self.sentiment.get(word, "")
             if sentiment_score == "pos":
-                positive += 1
+                if not negation_flag:
+                    positive += 1
+                else: 
+                    negative += 1
             elif sentiment_score == "neg":
-                print(word)
-                negative += 1     
+                if not negation_flag:
+                    negative += 1              
+                else: 
+                    positive += 1
+                    
+            if word in ["not", "didn't", "don't", "no", "never"]:
+                negation_flag = True
+            else:
+                negation_flag = False
 
         if positive > negative:
             return 1
@@ -484,14 +494,23 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # cosine similarity, no mean-centering, and no normalization of        #
         # scores.                                                              #
         ########################################################################
-        # Populate this list with k movie indices to recommend to the user.
-        user_ratings = np.array(user_ratings)
-        ratings = np.array(ratings_matrix)
-        similarities = self.similarity(user_ratings,ratings)
-        print(similarities)
-        movie_indices = np.argsort(similarities)[::-1]
-        unseen_movies = [idx for idx in movie_indices if idx not in np.nonzero(user_ratings)[0]]
-        recommendations = unseen_movies[:k]
+        similarities = self.similarity(user_ratings.reshape(1, -1), ratings_matrix)
+    
+        # Find movies not yet rated by the user
+        unrated_movies = np.where(user_ratings == 0)[0]
+        
+        # Calculate weighted sum for each unrated movie
+        weighted_sums = np.zeros(ratings_matrix.shape[0])
+        for movie in unrated_movies:
+            movie_ratings = ratings_matrix[movie]
+            # Exclude the user's own rating
+            movie_ratings = np.delete(movie_ratings, np.where(movie_ratings == user_ratings))
+            weighted_sums[movie] = np.sum(movie_ratings * similarities)
+        
+        # Get indices of top-k recommended movies
+        recommendations = np.argsort(weighted_sums)[::-1][:k]
+        
+        return recommendations.tolist()
 
         ########################################################################
         #                        END OF YOUR CODE                              #
