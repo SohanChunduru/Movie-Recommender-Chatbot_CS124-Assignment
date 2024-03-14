@@ -5,7 +5,7 @@
 # Update: 2024-01: Added the ability to run the chatbot as LLM interface (@mryan0)
 ######################################################################
 import util
-from pydantic import BaseModel, Field
+import random
 import re
 from porter_stemmer import PorterStemmer
 import numpy as np
@@ -154,14 +154,22 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                             if movie_indices:
                                 sentiment = self.extract_sentiment(line)
                                 if sentiment == 1:
-                                    response += f'You liked "{title}". Thank you! '
+                                    pos_prefix = ["You liked", "Glad to hear you enjoyed", "Looks like you had a good time with", "Thumbs up for"]
+                                    random_pos = random.choice(pos_prefix)
+                                    response += f'{random_pos} "{title}". Thank you! '
                                 elif sentiment == -1:
-                                    response += f'You did not like "{title}". Thank you! '
+                                    neg_prefix = ["You didn't like", "Sorry that you didn't enjoy", "You weren't a fan of", "Looks like you weren't impressed by"]
+                                    random_neg = random.choice(neg_prefix)
+                                    response += f'{random_neg} "{title}". Thank you! '
                                 else:
-                                    response += f'You had a neutral sentiment towards "{title}". Thank you! '
+                                    neut_prefix = ["You had mixed feelings about", "Neutral sentiment towards", "You felt ambivalent about" , "No strong opinions about", "Apathetic thinking of"]
+                                    random_neut = random.choice(neut_prefix)
+                                    response += f'{neut_prefix} "{title}". Thank you! '
                                 self.user_ratings.append(sentiment)
                             else:
-                                response = f"Sorry, I couldn't find any information about {title}. "
+                                no_findo = ["Sorry, I couldn't find any information about", "Looked everywhere but couldn't find, scrounged the face of the Earth, but couldn't locate", "Went down the rabbit hole, but no luck to be found with detecting", "No intel on"]
+                                random_res = random.choice(no_findo)
+                                response = f"{random_res} {title}. "
                     else:
                         response = "Please tell me about one movie at a time. Go ahead."
                 else:
@@ -172,8 +180,6 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                     if recommended_indices:
                         recommended_movie = self.titles[recommended_indices[0]]
                         response += f"I suggest you watch {recommended_movie}."
-                    else:
-                        response += "I'm sorry, I couldn't find any recommendations for you."
                 else:
                     response += "\nTell me about another movie you've seen."
         return response
