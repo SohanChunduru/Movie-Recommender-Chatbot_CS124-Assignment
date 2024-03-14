@@ -154,6 +154,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                 if titles:
                     if len(titles) == 1:
                         for title in titles:
+                            movie_indices = []
                             movie_index = self.find_movies_by_title(title)
 
                             if len(movie_index) == 1:
@@ -164,17 +165,20 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                                         pos_prefix = ["You liked", "Glad to hear you enjoyed", "Looks like you had a good time with", "Thumbs up for"]
                                         random_pos = random.choice(pos_prefix)
                                         response += f'{random_pos} "{title}". Thank you! '
+                                        movie_indices.append(movie_index)
+                                        np.insert(self.user_ratings, movie_index, sentiment)
+                                        self.count += 1 
                                     elif sentiment == -1:
                                         neg_prefix = ["You didn't like", "Sorry that you didn't enjoy", "You weren't a fan of", "Looks like you weren't impressed by"]
                                         random_neg = random.choice(neg_prefix)
                                         response += f'{random_neg} "{title}". Thank you! '
+                                        movie_indices.append(movie_index)
+                                        np.insert(self.user_ratings, movie_index, sentiment)
+                                        self.count += 1 
                                     else:
-                                        neut_prefix = ["You had mixed feelings about", "Neutral sentiment towards", "You felt ambivalent about" , "No strong opinions about", "Apathetic thinking of"]
+                                        neut_prefix = ["I'm sorry, I'm not sure if you liked ", "Apologies, I'm uncertain about your opinion on", "My apologies, I'm a bit unsure if you're a fan of" , "I'm sorry, I'm not sure if you have positive feelings towards"]
                                         random_neut = random.choice(neut_prefix)
-                                        response += f'{random_neut} "{title}". Thank you! '
-
-                                    np.insert(self.user_ratings, movie_index, sentiment)
-                                    self.count += 1                                
+                                        response += f'{random_neut} "{title}". Tell me more about it.'                               
                             elif len(movie_index) == 0:
                                 no_findo = ["Sorry, I couldn't find any information about", "Looked everywhere but couldn't find", "scrounged the face of the Earth, but couldn't locate", "Went down the rabbit hole, but no luck to be found with detecting", "No intel on"]
                                 random_res = random.choice(no_findo)
