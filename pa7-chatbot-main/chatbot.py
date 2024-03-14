@@ -192,7 +192,8 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
                 if self.count >= 5:
                     response += "\nThat's enough for me to make a recommendation.\n"
-                    recommended_indices = self.recommend(self.user_ratings, self.ratings, 1)
+                    recommended_indices = self.recommend(self.user_ratings, self.ratings, 5)
+                    print(recommended_indices)
                     if recommended_indices:
                         recommended_movie = self.titles[recommended_indices[0]]
                         print(recommended_indices)
@@ -375,6 +376,12 @@ Your reply: “Thank you for all the information regarding movies you have seen.
    
         positive = 0
         negative = 0
+        negative_words = ["not", "didn't", "don't", "no", "never", "isn’t", "wasn't", "never"]
+        for i in range(len(negative_words)):
+            negative_words[i] = p.stem(negative_words[i], 0, len(negative_words[i]) - 1)
+        adverbs = ["really", "actually", "truly", "extremely", "quite", "absolutely", "thoroughly", "genuinely"]
+        for i in range(len(adverbs)):
+            adverbs[i] = p.stem(adverbs[i], 0, len(adverbs[i]) - 1)
         negation_flag = False
 
         #stemming sentiment dictionary
@@ -393,6 +400,9 @@ Your reply: “Thank you for all the information regarding movies you have seen.
             if word in titles:
                 continue
             word = p.stem(word, 0, len(word) - 1)
+            if word in adverbs:
+                continue
+            word = p.stem(word, 0, len(word) - 1)
             sentiment_score = self.sentiment.get(word, "")
             if sentiment_score == "pos":
                 if not negation_flag:
@@ -405,7 +415,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                 else: 
                     positive += 1
                     
-            if word in ["not", "didn't", "don't", "no", "never"]:
+            if word in negative_words:
                 negation_flag = True
             else:
                 negation_flag = False
@@ -518,7 +528,6 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         ########################################################################
         
         recommendation_scores = []
-        print(user_ratings)
     
         # Find indices of movies the user has not yet rated
         rated_indices = np.where(user_ratings != 0)[0]
