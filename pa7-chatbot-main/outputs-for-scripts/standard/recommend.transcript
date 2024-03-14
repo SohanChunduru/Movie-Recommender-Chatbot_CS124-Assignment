@@ -1,5 +1,3 @@
-[93mWARNING: Unable to load Together API client (TOGETHER_API_KEY in api_keys.py not found)[0m
-[93mLLM Calls will not work.  Please add a TOGETHER_API_KEY to api_keys.py before starting parts 2 and 3.[0m
 Welcome to Stanford CS124's
  _______  _______       ___________
 |       ||   _   |      \          \
@@ -39,34 +37,29 @@ Tell me about another movie you've seen.
 Tell me about another movie you've seen.
 > I liked "Easy A"
 
-[]
 [96mKernie> [0mYou liked "Easy A". Thank you! 
 That's enough for me to make a recommendation.
-
+I'm sorry, I couldn't find any recommendations for you.
 > yes
 
-[]
 [96mKernie> [0mSorry, I didn't catch the movie title. Please provide it in quotation marks. 
 That's enough for me to make a recommendation.
-
+I'm sorry, I couldn't find any recommendations for you.
 > yeah!
 
-[]
 [96mKernie> [0mSorry, I didn't catch the movie title. Please provide it in quotation marks. 
 That's enough for me to make a recommendation.
-
+I'm sorry, I couldn't find any recommendations for you.
 > yes
 
-[]
 [96mKernie> [0mSorry, I didn't catch the movie title. Please provide it in quotation marks. 
 That's enough for me to make a recommendation.
-
+I'm sorry, I couldn't find any recommendations for you.
 > no
 
-[]
 [96mKernie> [0mSorry, I didn't catch the movie title. Please provide it in quotation marks. 
 That's enough for me to make a recommendation.
-
+I'm sorry, I couldn't find any recommendations for you.
 > :quit
 
 [96mKernie> [0mBye bye! Dune 2 in theaters now!

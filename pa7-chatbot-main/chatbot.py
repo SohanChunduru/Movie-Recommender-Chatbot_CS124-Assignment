@@ -168,10 +168,12 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                     response = "Sorry, I didn't catch the movie title. Please provide it in quotation marks. "
                 if len(self.user_ratings) >= 5:
                     response += "\nThat's enough for me to make a recommendation.\n"
-                    recommended_indices = self.recommend(self.user_ratings, self.binarize(self.ratings), 1)
-                    for index in recommended_indices:
-                        recommended_movie = self.titles[index]
+                    recommended_indices = self.recommend(self.user_ratings, self.ratings, 1)
+                    if recommended_indices:
+                        recommended_movie = self.titles[recommended_indices[0]]
                         response += f"I suggest you watch {recommended_movie}."
+                    else:
+                        response += "I'm sorry, I couldn't find any recommendations for you."
                 else:
                     response += "\nTell me about another movie you've seen."
         return response
