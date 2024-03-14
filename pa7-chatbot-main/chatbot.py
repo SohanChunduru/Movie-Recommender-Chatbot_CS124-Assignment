@@ -151,7 +151,6 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                     if len(titles) == 1:
                         for title in titles:
                             movie_indices = self.find_movies_by_title(title)
-                            print(movie_indices)
                             if movie_indices:
                                 sentiment = self.extract_sentiment(line)
                                 if sentiment == 1:
@@ -161,7 +160,6 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                                 else:
                                     response += f'You had a neutral sentiment towards "{title}". Thank you! '
                                 self.user_ratings.append(sentiment)
-                                print(len(self.user_ratings))
                             else:
                                 response = f"Sorry, I couldn't find any information about {title}. "
                     else:
@@ -171,8 +169,9 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                 if len(self.user_ratings) >= 5:
                     response += "\nThat's enough for me to make a recommendation.\n"
                     recommended_indices = self.recommend(self.user_ratings, self.binarize(self.ratings), 1)
-                    recommended_movie = self.movie_database[recommended_indices[0]]
-                    response += f"I suggest you watch {recommended_movie}."
+                    for index in recommended_indices:
+                        recommended_movie = self.titles[index]
+                        response += f"I suggest you watch {recommended_movie}."
                 else:
                     response += "\nTell me about another movie you've seen."
         return response
@@ -302,15 +301,13 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         cleanTitle.strip()
         if cleanTitle.startswith("the "):
             cleanTitle = cleanTitle[4:] + ", the"
-            print(cleanTitle)
 
         elif cleanTitle.startswith("a "):
             cleanTitle = cleanTitle[2:] + ", a"
 
         elif cleanTitle.startswith("an "):
             cleanTitle = cleanTitle[3:] + ", an"
-
-        print(year)    
+  
         pattern = cleanTitle + " (" + str(year) + ")"
         results = []
         index = 0  
@@ -429,7 +426,6 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
         binarized_ratings = np.where(ratings > threshold, 1, binarized_ratings)
         binarized_ratings = np.where((ratings <= threshold) & (ratings != 0), -1, binarized_ratings)
-        print(binarized_ratings)
 
         ########################################################################
         #                        END OF YOUR CODE                              #
@@ -494,24 +490,31 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # cosine similarity, no mean-centering, and no normalization of        #
         # scores.                                                              #
         ########################################################################
-        similarities = self.similarity(user_ratings.reshape(1, -1), ratings_matrix)
+        
+        recommendation_scores = []
     
-        # Find movies not yet rated by the user
-        unrated_movies = np.where(user_ratings == 0)[0]
+        # Find indices of movies the user has not yet rated
+        rated_indices = np.where(user_ratings != 0)[0]
+        unrated_indices = np.where(user_ratings == 0)[0]
         
-        # Calculate weighted sum for each unrated movie
-        weighted_sums = np.zeros(ratings_matrix.shape[0])
-        for movie in unrated_movies:
-            movie_ratings = ratings_matrix[movie]
-            # Exclude the user's own rating
-            movie_ratings = np.delete(movie_ratings, np.where(movie_ratings == user_ratings))
-            weighted_sums[movie] = np.sum(movie_ratings * similarities)
-        
-        # Get indices of top-k recommended movies
-        recommendations = np.argsort(weighted_sums)[::-1][:k]
-        
-        return recommendations.tolist()
+        # Iterate over each movie in the dataset
+        for j in unrated_indices:
+            # Calculate similarity score for movie i
+            similarity_score = 0
+            for i in rated_indices:
+                if user_ratings[i] != 0:
+                    similarity_score += self.similarity(ratings_matrix[j, :], ratings_matrix[i, :]) * user_ratings[i]
+            
+            # Add recommendation score for movie i to the list
+            if not np.isnan(similarity_score):
+                recommendation_scores.append((j, similarity_score))
 
+        # Sort recommendation scores in descending order
+        sorted_recommendation_scores = sorted(recommendation_scores, key=lambda x: x[1], reverse=True)
+
+        # Get top k recommendations
+        recommendations = [movie_index for movie_index, _ in sorted_recommendation_scores[:k]]
+    
         ########################################################################
         #                        END OF YOUR CODE                              #
         ########################################################################
