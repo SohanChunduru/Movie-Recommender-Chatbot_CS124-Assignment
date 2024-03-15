@@ -30,6 +30,7 @@ class Chatbot:
         self.user_ratings = np.array(ratings)
         for i in range(9125):
             self.user_ratings[i] = 0
+        self.movie_indices = []
         self.sentiment = util.load_sentiment_dictionary('data/sentiment.txt')
         self.count = 0
             
@@ -154,31 +155,36 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                 if titles:
                     if len(titles) == 1:
                         for title in titles:
-                            movie_indices = []
                             movie_index = self.find_movies_by_title(title)
 
                             if len(movie_index) == 1:
-                                if movie_index:
+                                if movie_index in self.movie_indices:
+                                    potential_responses = ["You already rated", "You gave a review for", "Already have a rating on file", "Previously gave some thought to"]
+                                    random_already = random.choice(potential_responses)
+                                    response += f'{random_already} {title}. Please talk about a title you have not rated already' 
+                                else:
                                     sentiment = self.extract_sentiment(line)
 
                                     if sentiment == 1:
+                                        self.movie_indices.append(movie_index)
+                                        print(self.movie_indices)
+                                        np.insert(self.user_ratings, movie_index[0], sentiment)
+                                        self.count += 1 
                                         pos_prefix = ["You liked", "Glad to hear you enjoyed", "Looks like you had a good time with", "Thumbs up for"]
                                         random_pos = random.choice(pos_prefix)
                                         response += f'{random_pos} "{title}". Thank you! '
-                                        movie_indices.append(movie_index)
-                                        np.insert(self.user_ratings, movie_index, sentiment)
-                                        self.count += 1 
                                     elif sentiment == -1:
                                         neg_prefix = ["You didn't like", "Sorry that you didn't enjoy", "You weren't a fan of", "Looks like you weren't impressed by"]
                                         random_neg = random.choice(neg_prefix)
                                         response += f'{random_neg} "{title}". Thank you! '
-                                        movie_indices.append(movie_index)
-                                        np.insert(self.user_ratings, movie_index, sentiment)
+                                        self.movie_indices.append(movie_index[0])
+                                        np.insert(self.user_ratings, movie_index[0], sentiment)
                                         self.count += 1 
                                     else:
                                         neut_prefix = ["I'm sorry, I'm not sure if you liked ", "Apologies, I'm uncertain about your opinion on", "My apologies, I'm a bit unsure if you're a fan of" , "I'm sorry, I'm not sure if you have positive feelings towards"]
                                         random_neut = random.choice(neut_prefix)
-                                        response += f'{random_neut} "{title}". Tell me more about it.'                               
+                                        response += f'{random_neut} "{title}". Tell me more about it.'  
+                                                                
                             elif len(movie_index) == 0:
                                 no_findo = ["Sorry, I couldn't find any information about", "Looked everywhere but couldn't find", "scrounged the face of the Earth, but couldn't locate", "Went down the rabbit hole, but no luck to be found with detecting", "No intel on"]
                                 random_res = random.choice(no_findo)
