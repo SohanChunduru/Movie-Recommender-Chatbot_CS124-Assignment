@@ -164,47 +164,37 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
                             if len(movie_index) == 1:
                                 if movie_index in self.movie_indices:
-                                    potential_responses = ["You already rated", "You gave a review for",
-                                                           "Already have a rating on file", "Previously gave some thought to"]
-                                    random_already = random.choice(
-                                        potential_responses)
-                                    response += f'{random_already} {title}. Please talk about a title you have not rated already'
+                                    potential_responses = ["You already rated", "You gave a review for", "Already have a rating on file", "Previously gave some thought to"]
+                                    random_already = random.choice(potential_responses)
+                                    response += f'{random_already} {title}. Please talk about a title you have not rated already' 
                                 else:
                                     sentiment = self.extract_sentiment(line)
 
                                     if sentiment == 1:
                                         self.movie_indices.append(movie_index)
                                         print(self.movie_indices)
-                                        np.insert(self.user_ratings,
-                                                  movie_index[0], sentiment)
-                                        self.count += 1
-                                        pos_prefix = ["You liked", "Glad to hear you enjoyed",
-                                                      "Looks like you had a good time with", "Thumbs up for"]
+                                        np.insert(self.user_ratings, movie_index[0], sentiment)
+                                        self.count += 1 
+                                        pos_prefix = ["You liked", "Glad to hear you enjoyed", "Looks like you had a good time with", "Thumbs up for"]
                                         random_pos = random.choice(pos_prefix)
                                         response += f'{random_pos} "{title}". Thank you! '
                                     elif sentiment == -1:
-                                        neg_prefix = ["You didn't like", "Sorry that you didn't enjoy",
-                                                      "You weren't a fan of", "Looks like you weren't impressed by"]
+                                        neg_prefix = ["You didn't like", "Sorry that you didn't enjoy", "You weren't a fan of", "Looks like you weren't impressed by"]
                                         random_neg = random.choice(neg_prefix)
                                         response += f'{random_neg} "{title}". Thank you! '
-                                        self.movie_indices.append(
-                                            movie_index[0])
-                                        np.insert(self.user_ratings,
-                                                  movie_index[0], sentiment)
-                                        self.count += 1
+                                        self.movie_indices.append(movie_index[0])
+                                        np.insert(self.user_ratings, movie_index[0], sentiment)
+                                        self.count += 1 
                                     else:
-                                        neut_prefix = ["I'm sorry, I'm not sure if you liked ", "Apologies, I'm uncertain about your opinion on",
-                                                       "My apologies, I'm a bit unsure if you're a fan of", "I'm sorry, I'm not sure if you have positive feelings towards"]
-                                        random_neut = random.choice(
-                                            neut_prefix)
-                                        response += f'{random_neut} "{title}". Tell me more about it.'
-
+                                        neut_prefix = ["I'm sorry, I'm not sure if you liked ", "Apologies, I'm uncertain about your opinion on", "My apologies, I'm a bit unsure if you're a fan of" , "I'm sorry, I'm not sure if you have positive feelings towards"]
+                                        random_neut = random.choice(neut_prefix)
+                                        response += f'{random_neut} "{title}". Tell me more about it.'  
+                                                                
                             elif len(movie_index) == 0:
-                                no_findo = ["Sorry, I couldn't find any information about", "Looked everywhere but couldn't find",
-                                            "scrounged the face of the Earth, but couldn't locate", "Went down the rabbit hole, but no luck to be found with detecting", "No intel on"]
+                                no_findo = ["Sorry, I couldn't find any information about", "Looked everywhere but couldn't find", "scrounged the face of the Earth, but couldn't locate", "Went down the rabbit hole, but no luck to be found with detecting", "No intel on"]
                                 random_res = random.choice(no_findo)
                                 response = f'{random_res} "{title}". '
-                            else:
+                            else: 
                                 response = "Please specify which version of this movie you liked (by specifying the year it came out in parantheses). Go ahead!"
                     else:
                         response = "Please tell me about one movie at a time. Go ahead."
@@ -213,8 +203,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
                 if self.count >= 5:
                     response += "\nThat's enough for me to make a recommendation.\n"
-                    recommended_indices = self.recommend(
-                        self.user_ratings, self.ratings, 5)
+                    recommended_indices = self.recommend(self.user_ratings, self.ratings, 5)
                     print(recommended_indices)
                     if recommended_indices:
                         recommended_movie = self.titles[recommended_indices[0]]
@@ -425,8 +414,11 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         :param title: a string containing a movie title
         :returns: a list of indices of matching movies
         """
-        translated_title = self.translate_to_english(title)
-        lowertitle = translated_title.lower()
+        if self.llm_enabled:
+            translated_title = self.translate_to_english(title)
+            lowertitle = translated_title.lower()
+        else:
+            lowertitle = title.lower()
         cleanTitle = lowertitle.strip()
         year = None
 
@@ -445,8 +437,8 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
         pattern = cleanTitle + " (" + str(year) + ")"
         results = []
-        index = 0
-        for t in self.titles:
+        index = 0  
+        for t in self.titles:  
             if year:
                 if pattern in t[0].lower():
                     results.append(index)
@@ -481,25 +473,22 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         extracted = self.extract_titles(preprocessed_input)
         title = extracted[0].lower()
         titles = title.split()
-
+   
         positive = 0
         negative = 0
-        negative_words = ["not", "didn't", "don't",
-                          "no", "never", "isn’t", "wasn't", "never"]
+        negative_words = ["not", "didn't", "don't", "no", "never", "isn’t", "wasn't", "never"]
         for i in range(len(negative_words)):
-            negative_words[i] = p.stem(
-                negative_words[i], 0, len(negative_words[i]) - 1)
-        adverbs = ["really", "actually", "truly", "extremely",
-                   "quite", "absolutely", "thoroughly", "genuinely"]
+            negative_words[i] = p.stem(negative_words[i], 0, len(negative_words[i]) - 1)
+        adverbs = ["really", "actually", "truly", "extremely", "quite", "absolutely", "thoroughly", "genuinely"]
         for i in range(len(adverbs)):
             adverbs[i] = p.stem(adverbs[i], 0, len(adverbs[i]) - 1)
         negation_flag = False
 
-        # stemming sentiment dictionary
+        #stemming sentiment dictionary
         old_keys = list(self.sentiment.keys())
         for key in old_keys:
             new_key = p.stem(key, 0, len(key) - 1)
-
+            
             if new_key != key:
                 self.sentiment[new_key] = self.sentiment.pop(key)
 
@@ -518,14 +507,14 @@ Your reply: “Thank you for all the information regarding movies you have seen.
             if sentiment_score == "pos":
                 if not negation_flag:
                     positive += 1
-                else:
+                else: 
                     negative += 1
             elif sentiment_score == "neg":
                 if not negation_flag:
-                    negative += 1
-                else:
+                    negative += 1              
+                else: 
                     positive += 1
-
+                    
             if word in negative_words:
                 negation_flag = True
             else:
@@ -572,8 +561,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         binarized_ratings = ratings
 
         binarized_ratings = np.where(ratings > threshold, 1, binarized_ratings)
-        binarized_ratings = np.where((ratings <= threshold) & (
-            ratings != 0), -1, binarized_ratings)
+        binarized_ratings = np.where((ratings <= threshold) & (ratings != 0), -1, binarized_ratings)
 
         ########################################################################
         #                        END OF YOUR CODE                              #
@@ -642,31 +630,28 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         ########################################################################
 
         recommendation_scores = []
-
+    
         # Find indices of movies the user has not yet rated
         rated_indices = np.where(user_ratings != 0)[0]
         unrated_indices = np.where(user_ratings == 0)[0]
-
+        
         # Iterate over each movie in the dataset
         for j in unrated_indices:
             # Calculate similarity score for movie i
             similarity_score = 0
             for i in rated_indices:
                 if user_ratings[i] != 0:
-                    similarity_score += self.similarity(
-                        ratings_matrix[j, :], ratings_matrix[i, :]) * user_ratings[i]
-
+                    similarity_score += self.similarity(ratings_matrix[j, :], ratings_matrix[i, :]) * user_ratings[i]
+            
             # Add recommendation score for movie i to the list
             if not np.isnan(similarity_score):
                 recommendation_scores.append((j, similarity_score))
 
         # Sort recommendation scores in descending order
-        sorted_recommendation_scores = sorted(
-            recommendation_scores, key=lambda x: x[1], reverse=True)
+        sorted_recommendation_scores = sorted(recommendation_scores, key=lambda x: x[1], reverse=True)
 
         # Get top k recommendations
-        recommendations = [movie_index for movie_index,
-                           _ in sorted_recommendation_scores[:k]]
+        recommendations = [movie_index for movie_index, _ in sorted_recommendation_scores[:k]]
 
         ########################################################################
         #                        END OF YOUR CODE                              #
