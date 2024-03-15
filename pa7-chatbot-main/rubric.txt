@@ -21,7 +21,13 @@ Did not implement any of the above features: NO
 #########################################################################################
 # Team Contributions                                                                    #
 #########################################################################################
-We did cool stuff!
+Sohan Chunduru: Did extract_sentiment, recommend, process, binarize, and find_movie_by_title functions as well as the initialization function. Also worked on part 2 (LLM prompting) and helped facilitate user testing.
+
+Atman Jahagirdar: Helped with the math and logical aspects for functions such as recommend and extract_sentiment and lead user testing, including finding people willing to test out the chatbot.
+
+Andrew Gao: Helped with find_movie_by_title and did extract_titles, similarity and extract_emotion helper functions and also worked on part 2 (LLM Prompting).
+
+Andrew Park: Did the LLM programming section including helping with extract_emotion, and adding the LLM code to find_movie_by_titles and process.
 
 #########################################################################################
 # Optional: Feel free to include anything else that you want us to know about your      #
