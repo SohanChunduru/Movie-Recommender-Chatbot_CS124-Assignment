@@ -25,7 +25,7 @@ class Chatbot:
         # This matrix has the following shape: num_movies x num_users
         # The values stored in each row i and column j is the rating for
         # movie i by user j
-        
+
         self.titles, ratings = util.load_ratings('data/ratings.txt')
         self.user_ratings = np.array(ratings)
         for i in range(9125):
@@ -33,7 +33,7 @@ class Chatbot:
         self.movie_indices = []
         self.sentiment = util.load_sentiment_dictionary('data/sentiment.txt')
         self.count = 0
-            
+
         ########################################################################
         # TODO: Binarize the movie ratings matrix.                             #
         ########################################################################
@@ -75,7 +75,7 @@ class Chatbot:
         #                          END OF YOUR CODE                            #
         ########################################################################
         return goodbye_message
-    
+
     def llm_system_prompt(self):
         """
         Return the system prompt used to guide the LLM chatbot conversation.
@@ -123,7 +123,6 @@ Your reply: “Thank you for all the information regarding movies you have seen.
     # 2. Modules 2 and 3: extraction and transformation                        #
     ############################################################################
 
-
     def process(self, line):
         """Process a line of input from the REPL and generate a response.
 
@@ -165,37 +164,47 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
                             if len(movie_index) == 1:
                                 if movie_index in self.movie_indices:
-                                    potential_responses = ["You already rated", "You gave a review for", "Already have a rating on file", "Previously gave some thought to"]
-                                    random_already = random.choice(potential_responses)
-                                    response += f'{random_already} {title}. Please talk about a title you have not rated already' 
+                                    potential_responses = ["You already rated", "You gave a review for",
+                                                           "Already have a rating on file", "Previously gave some thought to"]
+                                    random_already = random.choice(
+                                        potential_responses)
+                                    response += f'{random_already} {title}. Please talk about a title you have not rated already'
                                 else:
                                     sentiment = self.extract_sentiment(line)
 
                                     if sentiment == 1:
                                         self.movie_indices.append(movie_index)
                                         print(self.movie_indices)
-                                        np.insert(self.user_ratings, movie_index[0], sentiment)
-                                        self.count += 1 
-                                        pos_prefix = ["You liked", "Glad to hear you enjoyed", "Looks like you had a good time with", "Thumbs up for"]
+                                        np.insert(self.user_ratings,
+                                                  movie_index[0], sentiment)
+                                        self.count += 1
+                                        pos_prefix = ["You liked", "Glad to hear you enjoyed",
+                                                      "Looks like you had a good time with", "Thumbs up for"]
                                         random_pos = random.choice(pos_prefix)
                                         response += f'{random_pos} "{title}". Thank you! '
                                     elif sentiment == -1:
-                                        neg_prefix = ["You didn't like", "Sorry that you didn't enjoy", "You weren't a fan of", "Looks like you weren't impressed by"]
+                                        neg_prefix = ["You didn't like", "Sorry that you didn't enjoy",
+                                                      "You weren't a fan of", "Looks like you weren't impressed by"]
                                         random_neg = random.choice(neg_prefix)
                                         response += f'{random_neg} "{title}". Thank you! '
-                                        self.movie_indices.append(movie_index[0])
-                                        np.insert(self.user_ratings, movie_index[0], sentiment)
-                                        self.count += 1 
+                                        self.movie_indices.append(
+                                            movie_index[0])
+                                        np.insert(self.user_ratings,
+                                                  movie_index[0], sentiment)
+                                        self.count += 1
                                     else:
-                                        neut_prefix = ["I'm sorry, I'm not sure if you liked ", "Apologies, I'm uncertain about your opinion on", "My apologies, I'm a bit unsure if you're a fan of" , "I'm sorry, I'm not sure if you have positive feelings towards"]
-                                        random_neut = random.choice(neut_prefix)
-                                        response += f'{random_neut} "{title}". Tell me more about it.'  
-                                                                
+                                        neut_prefix = ["I'm sorry, I'm not sure if you liked ", "Apologies, I'm uncertain about your opinion on",
+                                                       "My apologies, I'm a bit unsure if you're a fan of", "I'm sorry, I'm not sure if you have positive feelings towards"]
+                                        random_neut = random.choice(
+                                            neut_prefix)
+                                        response += f'{random_neut} "{title}". Tell me more about it.'
+
                             elif len(movie_index) == 0:
-                                no_findo = ["Sorry, I couldn't find any information about", "Looked everywhere but couldn't find", "scrounged the face of the Earth, but couldn't locate", "Went down the rabbit hole, but no luck to be found with detecting", "No intel on"]
+                                no_findo = ["Sorry, I couldn't find any information about", "Looked everywhere but couldn't find",
+                                            "scrounged the face of the Earth, but couldn't locate", "Went down the rabbit hole, but no luck to be found with detecting", "No intel on"]
                                 random_res = random.choice(no_findo)
                                 response = f'{random_res} "{title}". '
-                            else: 
+                            else:
                                 response = "Please specify which version of this movie you liked (by specifying the year it came out in parantheses). Go ahead!"
                     else:
                         response = "Please tell me about one movie at a time. Go ahead."
@@ -204,7 +213,8 @@ Your reply: “Thank you for all the information regarding movies you have seen.
 
                 if self.count >= 5:
                     response += "\nThat's enough for me to make a recommendation.\n"
-                    recommended_indices = self.recommend(self.user_ratings, self.ratings, 5)
+                    recommended_indices = self.recommend(
+                        self.user_ratings, self.ratings, 5)
                     print(recommended_indices)
                     if recommended_indices:
                         recommended_movie = self.titles[recommended_indices[0]]
@@ -249,13 +259,13 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         ########################################################################
 
         return text
-    
+
     def extract_emotion(self, preprocessed_input):
         """LLM PROGRAMMING MODE: Extract an emotion from a line of pre-processed text.
-        
+
         Given an input text which has been pre-processed with preprocess(),
         this method should return a list representing the emotion in the text.
-        
+
         We use the following emotions for simplicity:
         Anger, Disgust, Fear, Happiness, Sadness and Surprise
         based on early emotion research from Paul Ekman.  Note that Ekman's
@@ -283,7 +293,94 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         :returns: a list of emotions in the text or an empty list if no emotions found.
         Possible emotions are: "Anger", "Disgust", "Fear", "Happiness", "Sadness", "Surprise"
         """
-        return []
+
+        system_prompt = """You are skilled at sentiment analsis. Given a user's message, identify the emotions present in the message.
+        Emotions are in one of six categories: Anger, Disgust, Fear, Happiness, Sadness, Surprise.
+        If no emotions are detected, respond with just an empty list.
+        You must respond with a simple Python list of strings, where each string is an emotion category. 
+        A message could have multiple emotions, one emotion, or no emotions.
+        Examples:
+        Input: "I am so upset with your recommendations! You suck"
+        Output: ["Anger"]
+        
+        Input: "OMG, that movie was sooo amazing and unexpected!"
+        Output: ["Surprise", "Happiness"]
+        
+        Input: "Your recommendations are making me so frustrated!"
+        Output: ["Anger"]
+
+        Input: "Wow! That was not a recommendation I expected!"
+        Output: ["Surprise"]
+
+        Input: "Ugh that movie was so gruesome!  Stop making stupid recommendations!"
+        Output: ["Disgust", "Anger"]
+        
+        Input: "Woah!!  That movie was so shockingly bad!  You had better stop making awful recommendations they're pissing me off."
+        Output: ["Anger", "Surprise"]
+        
+        Input: "I am quite frustrated by these awful recommendations!!!"
+        Output: ["Anger"]
+        
+        Only reply with the list. Your response must begin with a bracket [.
+        End your response with a bracket ].
+        Input: "{}"
+        Output:""".format(preprocessed_input)
+
+        stop = ['\n']
+
+        reply = util.simple_llm_call(system_prompt, "", stop=stop)
+
+        return list(eval(reply))
+
+    def translate_to_english(self, prompt):
+        system_prompt = """
+        You are an expert translator specializing in movie titles from various languages into English. 
+        If the prompt is in a foreign language, translate it to its equivalent English title.
+        If the prompt is in English, then return the same title. 
+        Do not change the numbers, apostrophes, special characters in the prompt. 
+        Do not return anything else besides the prompt in English form. 
+        Do not state a full sentence. Only state the prompt in English form. 
+
+        Text: "Der König der Löwen"
+        Translation: "The Lion King"
+
+        Text: "Die Schöne und das Biest"
+        Translation: "Beauty and the Beast"
+
+        Text: "Le Fabuleux Destin d'Amélie Poulain"
+        Translation: "Amélie"
+        
+        Text: "Jernmand"
+        Translation: "Iron Man"
+
+        Text: "Un Roi à New York"
+        Translation: "A King in New York"
+
+        Text: "Tote Männer Tragen Kein Plaid"
+        Translation: "Dead Men Don't Wear Plaid"
+
+        Text: "Indiana Jones e il Tempio Maledetto"
+        Translation: "Indiana Jones and the Temple of Doom"
+
+        Text: "Junglebogen"
+        Translation: "Jungle Book"
+
+        Text: "Doble Felicidad"
+        Translation: "Double Happiness"
+
+        Text: "Der König der Löwen"
+        Translation: "The Lion King"
+
+        Text: "{}"
+        Translation:
+        """.format(prompt)
+
+        stop = ['\n']
+
+        reply = util.simple_llm_call(system_prompt, prompt, stop=stop)
+
+        reply = reply.replace("Translation: ", "")
+        return reply.replace("\"", "")
 
     def extract_titles(self, preprocessed_input):
         """Extract potential movie titles from a line of pre-processed text.
@@ -309,7 +406,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         """
         moviTitlesList = re.findall(r'"(.*?)"', preprocessed_input)
         return moviTitlesList
-        
+
     def find_movies_by_title(self, title):
         """ Given a movie title, return a list of indices of matching movies.
 
@@ -328,10 +425,11 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         :param title: a string containing a movie title
         :returns: a list of indices of matching movies
         """
-        lowertitle = title.lower()
+        translated_title = self.translate_to_english(title)
+        lowertitle = translated_title.lower()
         cleanTitle = lowertitle.strip()
         year = None
-        
+
         if "(" in cleanTitle and ")" in cleanTitle:
             yearFound = re.search(r'\((\d{4})\)', cleanTitle)
             if yearFound:
@@ -340,17 +438,15 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         cleanTitle.strip()
         if cleanTitle.startswith("the "):
             cleanTitle = cleanTitle[4:] + ", the"
-
         elif cleanTitle.startswith("a "):
             cleanTitle = cleanTitle[2:] + ", a"
-
         elif cleanTitle.startswith("an "):
             cleanTitle = cleanTitle[3:] + ", an"
-  
+
         pattern = cleanTitle + " (" + str(year) + ")"
         results = []
-        index = 0  
-        for t in self.titles:  
+        index = 0
+        for t in self.titles:
             if year:
                 if pattern in t[0].lower():
                     results.append(index)
@@ -362,7 +458,7 @@ Your reply: “Thank you for all the information regarding movies you have seen.
                     results.append(index)
             index += 1
         return results
-    
+
     def extract_sentiment(self, preprocessed_input):
         """Extract a sentiment rating from a line of pre-processed text.
 
@@ -385,22 +481,25 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         extracted = self.extract_titles(preprocessed_input)
         title = extracted[0].lower()
         titles = title.split()
-   
+
         positive = 0
         negative = 0
-        negative_words = ["not", "didn't", "don't", "no", "never", "isn’t", "wasn't", "never"]
+        negative_words = ["not", "didn't", "don't",
+                          "no", "never", "isn’t", "wasn't", "never"]
         for i in range(len(negative_words)):
-            negative_words[i] = p.stem(negative_words[i], 0, len(negative_words[i]) - 1)
-        adverbs = ["really", "actually", "truly", "extremely", "quite", "absolutely", "thoroughly", "genuinely"]
+            negative_words[i] = p.stem(
+                negative_words[i], 0, len(negative_words[i]) - 1)
+        adverbs = ["really", "actually", "truly", "extremely",
+                   "quite", "absolutely", "thoroughly", "genuinely"]
         for i in range(len(adverbs)):
             adverbs[i] = p.stem(adverbs[i], 0, len(adverbs[i]) - 1)
         negation_flag = False
 
-        #stemming sentiment dictionary
+        # stemming sentiment dictionary
         old_keys = list(self.sentiment.keys())
         for key in old_keys:
             new_key = p.stem(key, 0, len(key) - 1)
-            
+
             if new_key != key:
                 self.sentiment[new_key] = self.sentiment.pop(key)
 
@@ -419,14 +518,14 @@ Your reply: “Thank you for all the information regarding movies you have seen.
             if sentiment_score == "pos":
                 if not negation_flag:
                     positive += 1
-                else: 
+                else:
                     negative += 1
             elif sentiment_score == "neg":
                 if not negation_flag:
-                    negative += 1              
-                else: 
+                    negative += 1
+                else:
                     positive += 1
-                    
+
             if word in negative_words:
                 negation_flag = True
             else:
@@ -473,7 +572,8 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         binarized_ratings = ratings
 
         binarized_ratings = np.where(ratings > threshold, 1, binarized_ratings)
-        binarized_ratings = np.where((ratings <= threshold) & (ratings != 0), -1, binarized_ratings)
+        binarized_ratings = np.where((ratings <= threshold) & (
+            ratings != 0), -1, binarized_ratings)
 
         ########################################################################
         #                        END OF YOUR CODE                              #
@@ -494,9 +594,11 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # TODO: Compute cosine similarity between the two vectors.             #
         ########################################################################
         similarity = 0
-        dotprod = np.dot(u,v)
+        dotprod = np.dot(u, v)
         lenU = np.linalg.norm(u)
         lenV = np.linalg.norm(v)
+        if lenU == 0 or lenV == 0:
+            return 0.0
         similarity = dotprod/(lenU * lenV)
         ########################################################################
         #                          END OF YOUR CODE                            #
@@ -538,31 +640,34 @@ Your reply: “Thank you for all the information regarding movies you have seen.
         # cosine similarity, no mean-centering, and no normalization of        #
         # scores.                                                              #
         ########################################################################
-        
+
         recommendation_scores = []
-    
+
         # Find indices of movies the user has not yet rated
         rated_indices = np.where(user_ratings != 0)[0]
         unrated_indices = np.where(user_ratings == 0)[0]
-        
+
         # Iterate over each movie in the dataset
         for j in unrated_indices:
             # Calculate similarity score for movie i
             similarity_score = 0
             for i in rated_indices:
                 if user_ratings[i] != 0:
-                    similarity_score += self.similarity(ratings_matrix[j, :], ratings_matrix[i, :]) * user_ratings[i]
-            
+                    similarity_score += self.similarity(
+                        ratings_matrix[j, :], ratings_matrix[i, :]) * user_ratings[i]
+
             # Add recommendation score for movie i to the list
             if not np.isnan(similarity_score):
                 recommendation_scores.append((j, similarity_score))
 
         # Sort recommendation scores in descending order
-        sorted_recommendation_scores = sorted(recommendation_scores, key=lambda x: x[1], reverse=True)
+        sorted_recommendation_scores = sorted(
+            recommendation_scores, key=lambda x: x[1], reverse=True)
 
         # Get top k recommendations
-        recommendations = [movie_index for movie_index, _ in sorted_recommendation_scores[:k]]
-    
+        recommendations = [movie_index for movie_index,
+                           _ in sorted_recommendation_scores[:k]]
+
         ########################################################################
         #                        END OF YOUR CODE                              #
         ########################################################################
